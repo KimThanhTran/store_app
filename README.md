@@ -1,86 +1,215 @@
-# Store App (Flutter + Node/Express + MongoDB)
+# Flutter Shoe Store
 
-Ứng dụng mua sắm giày dép, client Flutter (GetX) kết nối API Node/Express (MongoDB). Admin quản trị sản phẩm/đơn hàng/người dùng; người dùng duyệt sản phẩm, giỏ hàng, đặt hàng, xem đơn và chỉnh sửa hồ sơ (kèm đổi avatar).
+A cross-platform shoe shopping app built with Flutter, backed by a Node.js/Express REST API and MongoDB, with an in-app admin dashboard, VietQR bank-transfer payments and QR-based order tracking.
 
-## 1) Kiến trúc
-- Client: Flutter 3.19+ (Dart 3.9+), GetX, http, file_picker.
-- Server: Node 20+, Express + Mongoose + JWT; upload ảnh với Multer, phục vụ tĩnh `/uploads`.
-- Auth: JWT (role 0=admin, 1=user).
+![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?logo=dart&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?logo=firebase&logoColor=black)
 
-## 2) Chuẩn bị
-- Cài Flutter SDK, Node.js, MongoDB, Android Studio cho emulator (nếu chạy Android).
+> Originally a mobile-development course project (HUTECH). The Flutter package is still named `store_app`.
 
-## 3) Chạy server API
-```powershell
-# Cài dependency (lần đầu)
-pwsh -NoProfile -Command "Set-Location -LiteralPath 'D:\\WorkSpace\\LT_Mobile\\store_app\\server'; npm install"
+## Features
 
-# (Tuỳ chọn) Tạo .env tại folder server
-# PORT=3000
-# MONGO_URI=mongodb://127.0.0.1:27017/store_app
-# MONGO_DB=store_app
-# JWT_SECRET=dev_secret
+**Customers**
+- Browse products from the API and filter by category
+- Product details, size selector, wishlist and shopping cart
+- Place orders and view "My Orders"
+- Pay by bank transfer with a generated VietQR code
+- Order tracking screen with a Google Map and a shipping timeline
+- Edit profile (name, phone, avatar via gallery upload or image URL) and shipping addresses
+- Light/dark theme, English and Vietnamese (`en_US`, `vi_VN`) translations, in-app notifications
+- Sign in with email/password (API), plus Firebase-based Google and Facebook sign-in
 
-# Chạy server
-pwsh -NoProfile -Command "Set-Location -LiteralPath 'D:\\WorkSpace\\LT_Mobile\\store_app\\server'; npm start"
+**Admin**
+- Admin dashboard with four tabs: Products, Orders, Users, Tracking
+- Create, edit and delete products, with image upload or image URL
+- Change order status and change user roles
+- Dashboard statistics endpoint (users, products, orders, revenue, orders by status)
+- QR scanner screen for staff to log a parcel's location (tracking scan)
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Mobile / web client | Flutter (Dart SDK `^3.9.2`), GetX (state, routing, DI), GetStorage, `http`, `file_picker`, `image_picker` |
+| Maps, QR, UI | `google_maps_flutter`, `geolocator`, `mobile_scanner`, `qr_flutter`, `lottie`, `shimmer`, `cached_network_image`, `timeline_tile` |
+| Firebase (client) | `firebase_core`, `firebase_auth`, `cloud_firestore`, `google_sign_in`, `flutter_facebook_auth` |
+| API server | Node.js (ES modules), Express 4, Mongoose 8, JWT (`jsonwebtoken`), `bcryptjs`, Multer, `qrcode`, `node-fetch` |
+| Database | MongoDB |
+| Payments | VietQR QuickLink (vietqr.io) with a Casso-style webhook |
+
+## Architecture
+
+The app talks to two backends:
+
+- **Node/Express + MongoDB** is the main API for products, users, orders, uploads, payments and tracking, authenticated with JWT.
+- **Firebase** (Auth and Firestore) supports social sign-in and some per-user data such as wishlist and cart.
+
 ```
-Mặc định chạy ở `http://localhost:3000` và phục vụ ảnh tại `http://localhost:3000/uploads/...`.
+.
+├── lib/                      # Flutter app
+│   ├── controllers/          # GetX controllers (auth, cart, wishlist, theme, language, navigation)
+│   ├── models/               # Product, user, tracking models
+│   ├── repositories/         # API/Firestore access (products, orders, users, uploads, payments, tracking)
+│   ├── services/             # ApiService (HTTP client), auth and Firestore services
+│   ├── view/                 # Screens (home, cart, orders, tracking, QR, admin dashboard, ...)
+│   ├── widgets/              # Reusable widgets
+│   ├── features/ shipping_address/   # Feature-scoped orders, profile and address code
+│   └── utils/                # Themes, translations, formatters, helpers
+├── server/                   # Node/Express API
+│   └── src/
+│       ├── index.js          # App entry point, route mounting, /uploads static hosting
+│       ├── routes/           # auth, products, orders, users, admin, uploads, payments_qr, tracking
+│       ├── models/           # User, Product, Order, TrackingHistory (Mongoose)
+│       ├── middleware/auth.js# JWT verification + admin-only guard
+│       ├── utils/vietqr.js   # VietQR helpers
+│       └── seed.js           # Demo data seeding
+├── assets/                   # Images and Lottie animation
+├── android/ ios/ web/ windows/ macos/ linux/   # Flutter platform folders
+└── test/                     # Flutter tests
+```
 
-## 4) Chạy app Flutter
-```powershell
+## Getting started
+
+### Prerequisites
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) with Dart `^3.9.2`
+- Node.js 20+ and npm
+- A running MongoDB instance (local or hosted)
+- Android Studio / an emulator or a physical device (for mobile)
+- Optional: a Firebase project (for Google/Facebook sign-in and Firestore) and a Google Maps API key (for the tracking map)
+
+### 1. Clone
+
+```bash
+git clone https://github.com/KimThanhTran/store_app.git
+cd store_app
+```
+
+### 2. Run the API server
+
+```bash
+cd server
+npm install
+cp .env.example .env     # then edit the values (see below)
+npm run seed             # optional: demo products, users and one order
+npm run dev              # or: npm start
+```
+
+The server listens on `http://localhost:3000` by default. Check `http://localhost:3000/health`.
+
+#### Environment variables (`server/.env`)
+
+```env
+PORT=3000
+MONGO_URI=mongodb://127.0.0.1:27017/store_app
+MONGO_DB=store_app
+JWT_SECRET=replace_with_a_long_random_string
+
+# VietQR payment (bank info used to build the QR code)
+VIETQR_BANK_BIN=<your_bank_bin>
+VIETQR_ACC_NUMBER=<your_account_number>
+VIETQR_ACC_NAME=<ACCOUNT HOLDER NAME>
+VIETQR_USE_VIETQR_IO=true
+VIETQR_TEMPLATE=compact2
+
+# Payment webhook (Casso/PayOS style)
+QR_WEBHOOK_SECRET=<your_webhook_api_key>
+MOCK_QR_WEBHOOK=false     # set true in development to allow POST /api/payments/qr/mockPaid
+DEBUG=true
+```
+
+Only `MONGO_URI` (defaults to a local database) and `JWT_SECRET` are needed to run the core shop; the VietQR variables are needed only for QR payments.
+
+#### Seeded demo accounts
+
+`npm run seed` creates one admin and one regular user for local testing (see `server/src/seed.js` for the credentials). Change or remove them before deploying to any shared environment.
+
+### 3. Run the Flutter app
+
+```bash
+# from the repository root
 flutter pub get
 flutter run
 ```
-Base URL tự động:
-- Web/Desktop/iOS simulator: `http://localhost:3000`
-- Android emulator: `http://10.0.2.2:3000`
-Có thể override:
-```powershell
+
+The API base URL is chosen automatically in `lib/services/api_service.dart`:
+
+| Platform | Default base URL |
+| --- | --- |
+| Web, desktop, iOS simulator | `http://localhost:3000` |
+| Android emulator | `http://10.0.2.2:3000` |
+
+To target another host (for example a physical device on your LAN):
+
+```bash
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000
 ```
 
-## 5) Tính năng
-- Admin Dashboard: Products / Orders / Users, upload ảnh hoặc nhập URL ảnh, đổi trạng thái đơn, chỉnh vai trò user.
-- User: Duyệt sản phẩm (API), filter theo danh mục ở Shopping, wishlist, giỏ hàng, đặt hàng, xem đơn của tôi.
-- Hồ sơ: cập nhật tên/điện thoại, đổi avatar từ gallery (upload) hoặc dán URL trực tiếp.
+### 4. Firebase, Facebook and Google Maps (optional)
 
-### Thanh toán (VietQR QuickLink)
-- Ứng dụng sử dụng VietQR QuickLink (ảnh PNG lấy từ vietqr.io) để hiển thị mã QR chuyển khoản.
-- Server cung cấp các API:
-  - POST `/api/payments/qr/create` → tạo QR cho `orderId`, `amountVnd` và trả về `qrBase64` (PNG base64) + `addInfo`.
-  - GET `/api/payments/qr/status?orderId=...` → kiểm tra trạng thái thanh toán (`pending|paid|expired`).
-  - POST `/api/payments/qr/webhook` → webhook từ bên trung gian; dev có thể bật mock qua `MOCK_QR_WEBHOOK=true`.
-- Environment (server/.env):
-  - `VIETQR_BANK_BIN` – BIN ngân hàng (VD: 970418 cho VietinBank).
-  - `VIETQR_ACC_NUMBER` – Số tài khoản nhận.
-  - `VIETQR_ACC_NAME` – Tên chủ tài khoản (tùy chọn, nên đặt không dấu).
-  - `VIETQR_USE_VIETQR_IO=true` – Mặc định dùng QuickLink của vietqr.io.
-  - `VIETQR_TEMPLATE=compact2` – Template ảnh (compact2, img, ...).
-  - `QR_WEBHOOK_SECRET` – Secret để xác thực chữ ký HMAC (nếu kết nối webhook thật).
-  - `MOCK_QR_WEBHOOK=false` – Bật mock webhook khi dev.
+- Firebase options live in `lib/firebase_options.dart`, and the Android config in `android/app/google-services.json`. To use your own project, regenerate them with the FlutterFire CLI (`flutterfire configure`).
+- Facebook identifiers are read from `lib/utils/app_secrets.dart`.
+- The Android Google Maps key is declared in `android/app/src/main/AndroidManifest.xml`.
 
-Lưu ý: VNPay đã được gỡ bỏ hoàn toàn.
+Replace all of these with your own values before building; email/password login against the API does not depend on them.
 
-## 6) Upload ảnh
-- `POST /api/uploads/images` (admin only, multipart field `image`), phản hồi `{ url: "/uploads/images/<file>" }`.
-- Client ghép `ApiService.baseUrl` khi server trả relative URL.
+## API overview
 
-## 7) Những file quan trọng
-- `lib/services/api_service.dart` – HTTP client, tự chọn baseUrl theo platform (có chú thích tiếng Việt).
-- `lib/widgets/category_chips.dart` – Chip danh mục, hỗ trợ controlled (cha điều khiển) hoặc tự quản lý.
-- `lib/view/shopping_screen.dart` – Sử dụng `ProductGrid(useApi: true)` và filter category theo chips.
-- `lib/widgets/product_grid.dart` – Lưới sản phẩm từ API (Image.network với fallback).
-- `lib/view/admin_dashboard_api_screen.dart` – Dashboard; dialog thêm/sửa có nút Upload (file_picker + UploadRepository).
-- `lib/features/my_orders/edit_profile/views/widgets/profile_image.dart` – Đổi avatar (gallery upload hoặc dán URL).
-- `lib/repositories/*` – Gọi API: sản phẩm, đơn hàng, người dùng, upload.
-- `server/src/index.js` – Khởi động server, mount routes, phục vụ tĩnh `/uploads`.
-- `server/src/routes/uploads.js` – Route upload ảnh (admin only).
+Base URL: `http://localhost:3000`. Protected routes expect `Authorization: Bearer <JWT>`.
 
-## 8) Sự cố thường gặp
-- Android báo `Requested internal only, but not enough space` khi cài APK:
-  - Device Manager > Wipe Data hoặc tăng Internal Storage; hoặc `adb uninstall com.example.store_app` và dọn `/data/local/tmp`.
-- Android không gọi được `localhost` của host:
-  - Đã dùng `10.0.2.2` tự động. Nếu vẫn lỗi, kiểm tra firewall/port.
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| GET | `/health` | Public | Server and MongoDB connection state |
+| POST | `/api/auth/register` | Public | Register with email and password |
+| POST | `/api/auth/login` | Public | Login, returns JWT (7-day expiry) and user |
+| POST | `/api/auth/social-token` | Public | Exchange a Firebase UID/email for an API token |
+| GET | `/api/products` | Public | List products (`?category=`, `?limit=`) |
+| POST | `/api/products` | Admin | Create product |
+| PUT | `/api/products/:id` | Admin | Update product |
+| DELETE | `/api/products/:id` | Admin | Delete product |
+| POST | `/api/orders` | User | Create an order |
+| GET | `/api/orders/my` | User | Current user's orders |
+| GET | `/api/orders` | Admin | All orders |
+| PATCH | `/api/orders/:id/status` | Admin | Set status: `pending`, `processing`, `shipped`, `delivered`, `cancelled` |
+| GET | `/api/users` | Admin | List users |
+| GET / PUT | `/api/users/me` | User | Get / update own profile (name, phone, avatar URL) |
+| PUT | `/api/users/:id` | Admin | Update a user (including role) |
+| GET | `/api/admin/stats` | Admin | Totals, revenue and orders by status |
+| POST | `/api/uploads/images` | Admin | Upload an image (multipart field `image`) |
+| POST | `/api/payments/qr/create` | Public | Create a VietQR code for `orderId` and `amountVnd` |
+| GET | `/api/payments/qr/status?orderId=` | Public | Payment intent status (`pending`, `paid`, `expired`) |
+| GET / POST | `/api/payments/qr/webhook` | Public | Bank-transfer webhook (GET is a verification ping) |
+| POST | `/api/payments/qr/mockPaid` | Dev only | Mark an intent paid when `MOCK_QR_WEBHOOK=true` |
+| POST | `/api/tracking/scan` | Staff | Log a parcel scan (location, status, notes) |
+| GET | `/api/tracking/:trackingId` | User / Staff | Tracking history for an order |
+| GET | `/api/tracking/order/:orderId` | User / Staff | Tracking history by order id |
 
-## 9) Facebook Login (tuỳ chọn)
-Ứng dụng còn phần tích hợp Facebook Login (plugin `flutter_facebook_auth`). Nếu dùng, cấu hình App ID/Client Token theo tài liệu plugin.
+Uploaded files are served from `/uploads/...`.
+
+## Roles and authentication
+
+- JWT payload contains the user id and a numeric `role`: `0` = admin, `1` = customer.
+- Admin routes use the `authRequired` + `adminOnly` middleware.
+- Customers can only read tracking data for their own orders; scanning is limited to non-customer roles (staff).
+- After login the app routes admin users to the admin dashboard.
+- Passwords are hashed with bcrypt. Social sign-in users are created without a password and identified by their Firebase UID.
+
+## Payments and tracking notes
+
+- QR payment intents are stored in server memory with a 15-minute expiry (the source marks this as demo-only), so they reset when the server restarts.
+- Webhook matching is done on transfer amount and an `ORDER-<orderId>` transfer description. Signature verification is present in code but currently commented out.
+- Each order receives a generated `trackingId` (`TRK...`). Scans append to a tracking history and can advance the order status.
+
+## Testing
+
+```bash
+flutter test
+```
+
+## License
+
+No license file is included in this repository.
