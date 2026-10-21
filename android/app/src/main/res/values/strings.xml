@@ -3,7 +3,7 @@
     <!-- Facebook App ID must match your Meta app (see Firebase Auth provider screenshot) -->
     <string name="facebook_app_id">1881845609435665</string>
     <!-- Facebook Client Token from Meta Developer dashboard (Settings → Advanced) -->
-    <string name="facebook_client_token">f95d026048c6b12974492c04908892fc</string>
+    <string name="facebook_client_token">YOUR_FACEBOOK_CLIENT_TOKEN</string>
     <!-- Used by Facebook CustomTabActivity scheme -->
     <string name="fb_login_protocol_scheme">fb1881845609435665</string>
 </resources>

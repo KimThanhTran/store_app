@@ -44,3 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 README.md
+
+# Secrets and dependencies (never commit)
+node_modules/
+.env
+.env.*
+!.env.example
+server/uploads/

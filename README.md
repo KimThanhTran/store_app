@@ -155,7 +155,7 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000
 - Facebook identifiers are read from `lib/utils/app_secrets.dart`.
 - The Android Google Maps key is declared in `android/app/src/main/AndroidManifest.xml`.
 
-Replace all of these with your own values before building; email/password login against the API does not depend on them.
+The Facebook client token (`strings.xml`, `app_secrets.dart`) and the Google Maps key (`AndroidManifest.xml`) are committed as placeholders (`YOUR_FACEBOOK_CLIENT_TOKEN`, `YOUR_GOOGLE_MAPS_API_KEY`); put your own values in locally and do not commit them. Replace all of these with your own values before building; email/password login against the API does not depend on them.
 
 ## API overview
 
